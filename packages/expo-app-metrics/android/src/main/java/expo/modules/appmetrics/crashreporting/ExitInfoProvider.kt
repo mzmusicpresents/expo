@@ -25,7 +25,7 @@ data class ExitRecord(
     get() = "$timestampMillis:$pid:$reason"
 
   /**
-   * Only true crashes count, matching how Play Console separates crash rate 
+   * Only true crashes count, matching how Play Console separates crash rate
    * from ANR rate. ANRs, low-memory kills, and bare signals are deliberately excluded.
    */
   val isStandaloneCrash: Boolean
@@ -66,7 +66,7 @@ fun interface ExitInfoProvider {
 }
 
 /**
- * Decouples `CrashReportProcessor` from the API-30 framework type 
+ * Decouples `CrashReportProcessor` from the API-30 framework type
  * so its logic runs and tests on every SDK level.
  */
 class ExitInfoProviderImpl(private val context: Context) : ExitInfoProvider {
