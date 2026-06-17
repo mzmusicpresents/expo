@@ -37,6 +37,36 @@ open class SharedObject: AnySharedObject {
   public init() {}
 
   /**
+   Recovers the native shared object from the JavaScript `this` of a host-function call, bypassing the
+   `SharedObjectRegistry` id table. The JS object carries a ``SharedObjectNativeState`` (attached by
+   `SharedObjectRegistry.add`), so the native counterpart is read straight off the object's native
+   state. Used by `@SharedObject`'s synthesized `_decorateSharedObject` bindings, which receive `this`
+   as a borrowed `JavaScriptUnownedValue`; the borrowed value is read in place via `getObject(in:)`
+   without materializing an owning value.
+
+   Deliberately non-generic, returning the base `SharedObject`: the caller downcasts to the concrete
+   subclass with `as!` at the call site, in its own module, where the type is fully known. That keeps
+   the call free of generic type-metadata / witness-table threading (this helper lives in a prebuilt
+   module that wouldn't specialize a `<T>` at the call site) and leaves only a plain concrete class
+   downcast, which can't fail for a correctly-bound method since the JS object's prototype guarantees
+   the native type.
+
+   Throws `NativeSharedObjectNotFoundException` when `this` isn't an object or carries no
+   `SharedObjectNativeState` (e.g. a foreign or garbage value passed from JS).
+   */
+  @JavaScriptActor
+  public static func unwrap(
+    _ this: borrowing JavaScriptUnownedValue,
+    in runtime: JavaScriptRuntime
+  ) throws -> SharedObject {
+    guard let jsObject = try? this.asObject(in: runtime),
+      let native = jsObject.getNativeState(as: SharedObjectNativeState.self)?.native else {
+      throw NativeSharedObjectNotFoundException()
+    }
+    return native
+  }
+
+  /**
    A function that will be called before the object is removed from the registry.
    */
   open func sharedObjectWillRelease() {}
