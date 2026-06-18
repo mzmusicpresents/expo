@@ -1,4 +1,4 @@
-import { FileTypeInformation } from '../typeInformation';
+import { FileTypeInformation } from '../typeInformation.types';
 export type SwiftFileTypeInformationOptions = {
     typeInference: boolean;
 };

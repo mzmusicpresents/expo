@@ -28,9 +28,10 @@ const child_process_1 = require("child_process");
 const crypto_1 = require("crypto");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-const typeInformation_1 = require("../typeInformation");
+const typeInformation_types_1 = require("../typeInformation.types");
 const typescriptGeneration_1 = require("../typescriptGeneration");
 const utils_1 = require("../utils");
+const typeInformation_1 = require("../typeInformation");
 let sourcekittenInstalled;
 function isSourceKittenInstalled() {
     if (sourcekittenInstalled !== undefined) {
@@ -120,14 +121,14 @@ function sanitizeAndValidateOutputPath(rawPath, isFilePath = true) {
 }
 function parseInferenceOption(option) {
     if (!option)
-        return typeInformation_1.TypeInferenceOption.PREPROCESS_AND_INFERENCE;
+        return typeInformation_types_1.TypeInferenceOption.PREPROCESS_AND_INFERENCE;
     switch (option) {
         case 'NO_INFERENCE':
-            return typeInformation_1.TypeInferenceOption.NO_INFERENCE;
+            return typeInformation_types_1.TypeInferenceOption.NO_INFERENCE;
         case 'SIMPLE_INFERENCE':
-            return typeInformation_1.TypeInferenceOption.SIMPLE_INFERENCE;
+            return typeInformation_types_1.TypeInferenceOption.SIMPLE_INFERENCE;
         case 'PREPROCESS_AND_INFERENCE':
-            return typeInformation_1.TypeInferenceOption.PREPROCESS_AND_INFERENCE;
+            return typeInformation_types_1.TypeInferenceOption.PREPROCESS_AND_INFERENCE;
     }
     return null;
 }

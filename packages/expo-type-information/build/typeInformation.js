@@ -33,7 +33,6 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TypeInferenceOption = exports.BasicType = exports.TypeKind = exports.IdentifierKind = void 0;
 exports.serializeTypeInformation = serializeTypeInformation;
 exports.deserializeTypeInformation = deserializeTypeInformation;
 exports.withPreparedSingleFile = withPreparedSingleFile;
@@ -43,43 +42,7 @@ const os = __importStar(require("os"));
 const path = __importStar(require("path"));
 const sourcekittenTypeInformation_1 = require("./swift/sourcekittenTypeInformation");
 const utils_1 = require("./utils");
-/**
- * Represents the kind of a parsed identifier from a native file.
- */
-var IdentifierKind;
-(function (IdentifierKind) {
-    IdentifierKind[IdentifierKind["BASIC"] = 0] = "BASIC";
-    IdentifierKind[IdentifierKind["ENUM"] = 1] = "ENUM";
-    IdentifierKind[IdentifierKind["RECORD"] = 2] = "RECORD";
-    IdentifierKind[IdentifierKind["CLASS"] = 3] = "CLASS";
-})(IdentifierKind || (exports.IdentifierKind = IdentifierKind = {}));
-/**
- * Categorizes the type node within the abstract syntax tree.
- */
-var TypeKind;
-(function (TypeKind) {
-    TypeKind[TypeKind["BASIC"] = 0] = "BASIC";
-    TypeKind[TypeKind["IDENTIFIER"] = 1] = "IDENTIFIER";
-    TypeKind[TypeKind["SUM"] = 2] = "SUM";
-    TypeKind[TypeKind["PARAMETRIZED"] = 3] = "PARAMETRIZED";
-    TypeKind[TypeKind["OPTIONAL"] = 4] = "OPTIONAL";
-    TypeKind[TypeKind["ARRAY"] = 5] = "ARRAY";
-    TypeKind[TypeKind["DICTIONARY"] = 6] = "DICTIONARY";
-})(TypeKind || (exports.TypeKind = TypeKind = {}));
-/**
- * Represents a basic type that is not user defined.
- */
-var BasicType;
-(function (BasicType) {
-    BasicType[BasicType["ANY"] = 0] = "ANY";
-    BasicType[BasicType["STRING"] = 1] = "STRING";
-    BasicType[BasicType["NUMBER"] = 2] = "NUMBER";
-    BasicType[BasicType["BOOLEAN"] = 3] = "BOOLEAN";
-    BasicType[BasicType["VOID"] = 4] = "VOID";
-    BasicType[BasicType["UNDEFINED"] = 5] = "UNDEFINED";
-    /** Represents a type that couldn't be resolved */
-    BasicType[BasicType["UNRESOLVED"] = 6] = "UNRESOLVED";
-})(BasicType || (exports.BasicType = BasicType = {}));
+const typeInformation_types_1 = require("./typeInformation.types");
 /**
  * Used for testing purposes, maps Sets and Maps to Arrays and returns `FileTypeInformationSerialized` object which can be written to a JSON.
  * @param fileTypeinformation `FileTypeInformation` object to serialize.
@@ -114,19 +77,6 @@ function deserializeTypeInformation({ usedTypeIdentifiersList, declaredTypeIdent
         enums,
     };
 }
-/**
- * Defines the level of type inference to apply when extracting type information.
- * > **Note:** In case where type inference is on, it may take more then twice the time to compute the type information.
- */
-var TypeInferenceOption;
-(function (TypeInferenceOption) {
-    /** No type inference will be performed. */
-    TypeInferenceOption[TypeInferenceOption["NO_INFERENCE"] = 0] = "NO_INFERENCE";
-    /** Basic type inference will be applied. */
-    TypeInferenceOption[TypeInferenceOption["SIMPLE_INFERENCE"] = 1] = "SIMPLE_INFERENCE";
-    /** Preprocesses the file by injecting returns to extract more type info from sourcekitten. */
-    TypeInferenceOption[TypeInferenceOption["PREPROCESS_AND_INFERENCE"] = 2] = "PREPROCESS_AND_INFERENCE";
-})(TypeInferenceOption || (exports.TypeInferenceOption = TypeInferenceOption = {}));
 async function mergeFileContents(absoluteFilePaths) {
     const filesContents = await (0, utils_1.taskAll)(absoluteFilePaths, (filePath) => fs.promises.readFile(filePath, 'utf-8'));
     return filesContents.join('');
@@ -143,7 +93,7 @@ async function withTempFile(content, fn) {
     }
 }
 async function withPreparedSingleFile({ input, typeInference, mapUnicodeCharacters }, fn) {
-    const shouldPreprocessFile = typeInference === TypeInferenceOption.PREPROCESS_AND_INFERENCE || mapUnicodeCharacters;
+    const shouldPreprocessFile = typeInference === typeInformation_types_1.TypeInferenceOption.PREPROCESS_AND_INFERENCE || mapUnicodeCharacters;
     if (!shouldPreprocessFile && input.type === 'file' && input.inputFileAbsolutePaths.length === 0) {
         return fn(input.inputFileAbsolutePaths[0]);
     }
@@ -168,8 +118,8 @@ async function withPreparedSingleFile({ input, typeInference, mapUnicodeCharacte
  * @header TypeInformationAbstraction
  */
 async function getFileTypeInformation({ input, typeInference, mapUnicodeCharacters, }) {
-    const shouldPreprocessFile = typeInference === TypeInferenceOption.PREPROCESS_AND_INFERENCE || mapUnicodeCharacters;
-    const typeInferenceOn = typeInference !== TypeInferenceOption.NO_INFERENCE;
+    const shouldPreprocessFile = typeInference === typeInformation_types_1.TypeInferenceOption.PREPROCESS_AND_INFERENCE || mapUnicodeCharacters;
+    const typeInferenceOn = typeInference !== typeInformation_types_1.TypeInferenceOption.NO_INFERENCE;
     if (!shouldPreprocessFile && input.type === 'file' && input.inputFileAbsolutePaths.length === 0) {
         return (0, sourcekittenTypeInformation_1.getSwiftFileTypeInformation)(input.inputFileAbsolutePaths[0], {
             typeInference: typeInferenceOn,

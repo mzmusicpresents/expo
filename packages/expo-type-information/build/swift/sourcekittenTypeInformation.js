@@ -9,7 +9,7 @@ const child_process_1 = require("child_process");
 const fs_1 = __importDefault(require("fs"));
 const util_1 = require("util");
 const yaml_1 = __importDefault(require("yaml"));
-const typeInformation_1 = require("../typeInformation");
+const typeInformation_types_1 = require("../typeInformation.types");
 const utils_1 = require("../utils");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const swiftDeclarationKind = {
@@ -118,19 +118,46 @@ function findRootColonInDictionary(type) {
     }
     return colonIndex;
 }
+const basicTypesConversions = new Map([
+    ['unknown', typeInformation_types_1.BasicType.ANY],
+    ['Any', typeInformation_types_1.BasicType.ANY],
+    ['JavaScriptValue', typeInformation_types_1.BasicType.ANY],
+    ['String', typeInformation_types_1.BasicType.STRING],
+    ['URL', typeInformation_types_1.BasicType.STRING],
+    ['Bool', typeInformation_types_1.BasicType.BOOLEAN],
+    ['Int', typeInformation_types_1.BasicType.NUMBER],
+    ['Float', typeInformation_types_1.BasicType.NUMBER],
+    ['Double', typeInformation_types_1.BasicType.NUMBER],
+    ['CGFloat', typeInformation_types_1.BasicType.NUMBER],
+    ['()', typeInformation_types_1.BasicType.VOID],
+    ['Void', typeInformation_types_1.BasicType.VOID],
+    ['Void', typeInformation_types_1.BasicType.VOID],
+    ['Never', typeInformation_types_1.BasicType.NEVER],
+    ['JavaScriptObject', typeInformation_types_1.BasicType.OBJECT],
+]);
+const convertibleTypesConversions = new Map([
+    ['CGColor', typeInformation_types_1.ConvertibleType.COLOR],
+    ['UIColor', typeInformation_types_1.ConvertibleType.COLOR],
+    ['CGPoint', typeInformation_types_1.ConvertibleType.CG_POINT],
+    ['CGSize', typeInformation_types_1.ConvertibleType.CG_SIZE],
+    ['CGVector', typeInformation_types_1.ConvertibleType.CG_VECTOR],
+    ['CGRect', typeInformation_types_1.ConvertibleType.CG_RECT],
+    ['JavaScriptFunction', typeInformation_types_1.ConvertibleType.JS_FUNCTION],
+    ['Data', typeInformation_types_1.ConvertibleType.UINT8_ARRAY],
+]);
 function mapSwiftTypeToTsType(type) {
     if (!type) {
-        return { kind: typeInformation_1.TypeKind.BASIC, type: typeInformation_1.BasicType.UNRESOLVED };
+        return { kind: typeInformation_types_1.TypeKind.BASIC, type: typeInformation_types_1.BasicType.UNRESOLVED };
     }
     if (isSwiftOptional(type)) {
-        return { kind: typeInformation_1.TypeKind.OPTIONAL, type: mapSwiftTypeToTsType(type.slice(0, -1).trim()) };
+        return { kind: typeInformation_types_1.TypeKind.OPTIONAL, type: mapSwiftTypeToTsType(type.slice(0, -1).trim()) };
     }
     if (isSwiftDictionary(type)) {
         const { key, value } = unwrapSwiftDictionary(type);
         const keyType = mapSwiftTypeToTsType(key);
         const valueType = mapSwiftTypeToTsType(value);
         return {
-            kind: typeInformation_1.TypeKind.DICTIONARY,
+            kind: typeInformation_types_1.TypeKind.DICTIONARY,
             type: {
                 key: keyType,
                 value: valueType,
@@ -139,7 +166,7 @@ function mapSwiftTypeToTsType(type) {
     }
     if (isSwiftArray(type)) {
         return {
-            kind: typeInformation_1.TypeKind.ARRAY,
+            kind: typeInformation_types_1.TypeKind.ARRAY,
             type: unwrapSwiftArray(type),
         };
     }
@@ -147,44 +174,33 @@ function mapSwiftTypeToTsType(type) {
         const parametrizedType = unwrapParametrizedType(type);
         if (isEitherTypeIdentifier(parametrizedType.name)) {
             return {
-                kind: typeInformation_1.TypeKind.SUM,
+                kind: typeInformation_types_1.TypeKind.SUM,
                 type: parametrizedType,
             };
         }
         return {
-            kind: typeInformation_1.TypeKind.PARAMETRIZED,
+            kind: typeInformation_types_1.TypeKind.PARAMETRIZED,
             type: parametrizedType,
         };
     }
-    const returnType = {
-        kind: typeInformation_1.TypeKind.BASIC,
-        type: typeInformation_1.BasicType.ANY,
-    };
-    switch (type) {
-        case 'unknown':
-        case 'Any':
-            returnType.type = typeInformation_1.BasicType.ANY;
-            break;
-        case 'String':
-            returnType.type = typeInformation_1.BasicType.STRING;
-            break;
-        case 'Bool':
-            returnType.type = typeInformation_1.BasicType.BOOLEAN;
-            break;
-        case 'Int':
-        case 'Float':
-        case 'Double':
-            returnType.type = typeInformation_1.BasicType.NUMBER;
-            break;
-        case 'Void':
-        case '()': // `()` type is the same as `Void` in Swift. SourceKit will somtimes output `()` instead of `Void` when queried about the type.
-            returnType.type = typeInformation_1.BasicType.VOID;
-            break;
-        default:
-            returnType.kind = typeInformation_1.TypeKind.IDENTIFIER;
-            returnType.type = type;
+    const tsBasicType = basicTypesConversions.get(type);
+    if (tsBasicType !== undefined) {
+        return {
+            kind: typeInformation_types_1.TypeKind.BASIC,
+            type: tsBasicType,
+        };
     }
-    return returnType;
+    const tsConvertibleType = convertibleTypesConversions.get(type);
+    if (tsConvertibleType !== undefined) {
+        return {
+            kind: typeInformation_types_1.TypeKind.CONVERTIBLE,
+            type: tsConvertibleType,
+        };
+    }
+    return {
+        kind: typeInformation_types_1.TypeKind.IDENTIFIER,
+        type,
+    };
 }
 function getStructureFromFile(file) {
     const command = 'sourcekitten structure --file ' + file.path;
@@ -235,7 +251,7 @@ function getSDKPath() {
     return cachedSDKPath;
 }
 function getUnresolvedType() {
-    return { kind: typeInformation_1.TypeKind.BASIC, type: typeInformation_1.BasicType.UNRESOLVED };
+    return { kind: typeInformation_types_1.TypeKind.BASIC, type: typeInformation_types_1.BasicType.UNRESOLVED };
 }
 async function extractDeclarationType(structure, file, options) {
     if (structure['key.typename']) {
@@ -550,8 +566,8 @@ function parsePropertyString(property, definitionOffset) {
     return {
         name: propertyName,
         type: {
-            kind: typeInformation_1.TypeKind.BASIC,
-            type: typeInformation_1.BasicType.UNRESOLVED,
+            kind: typeInformation_types_1.TypeKind.BASIC,
+            type: typeInformation_types_1.BasicType.UNRESOLVED,
         },
         definitionOffset,
     };
@@ -664,31 +680,31 @@ function parseStructure(structure, name, modulesStructures, recordsStructures, e
 }
 function getTypeIdentifierDefinitionMap(fileTypeInformation) {
     const typeIdentifierDefinitionMap = new Map([]);
-    fileTypeInformation.records.forEach((r) => typeIdentifierDefinitionMap.set(r.name, { kind: typeInformation_1.IdentifierKind.RECORD, definition: r }));
-    fileTypeInformation.enums.forEach((e) => typeIdentifierDefinitionMap.set(e.name, { kind: typeInformation_1.IdentifierKind.ENUM, definition: e }));
+    fileTypeInformation.records.forEach((r) => typeIdentifierDefinitionMap.set(r.name, { kind: typeInformation_types_1.IdentifierKind.RECORD, definition: r }));
+    fileTypeInformation.enums.forEach((e) => typeIdentifierDefinitionMap.set(e.name, { kind: typeInformation_types_1.IdentifierKind.ENUM, definition: e }));
     return typeIdentifierDefinitionMap;
 }
 function collectTypeIdentifiers(type, typeIdentiers, inferredTypeParametersCount) {
     switch (type.kind) {
-        case typeInformation_1.TypeKind.ARRAY:
-        case typeInformation_1.TypeKind.OPTIONAL:
+        case typeInformation_types_1.TypeKind.ARRAY:
+        case typeInformation_types_1.TypeKind.OPTIONAL:
             collectTypeIdentifiers(type.type, typeIdentiers, inferredTypeParametersCount);
             break;
-        case typeInformation_1.TypeKind.DICTIONARY:
+        case typeInformation_types_1.TypeKind.DICTIONARY:
             collectTypeIdentifiers(type.type.key, typeIdentiers, inferredTypeParametersCount);
             collectTypeIdentifiers(type.type.value, typeIdentiers, inferredTypeParametersCount);
             break;
-        case typeInformation_1.TypeKind.SUM:
+        case typeInformation_types_1.TypeKind.SUM:
             for (const t of type.type.types) {
                 collectTypeIdentifiers(t, typeIdentiers, inferredTypeParametersCount);
             }
             break;
-        case typeInformation_1.TypeKind.BASIC:
+        case typeInformation_types_1.TypeKind.BASIC:
             break;
-        case typeInformation_1.TypeKind.IDENTIFIER:
+        case typeInformation_types_1.TypeKind.IDENTIFIER:
             typeIdentiers.add(type.type);
             break;
-        case typeInformation_1.TypeKind.PARAMETRIZED: {
+        case typeInformation_types_1.TypeKind.PARAMETRIZED: {
             const parametrizedType = type.type;
             const typename = parametrizedType.name;
             typeIdentiers.add(typename);

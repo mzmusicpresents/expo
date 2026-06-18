@@ -1,4 +1,4 @@
-import { FileTypeInformation, ModuleClassDeclaration } from './typeInformation';
+import { FileTypeInformation, ModuleClassDeclaration } from './typeInformation.types';
 /**
  * This function generates a JavaScript/TypeScript mock content string for a given ModuleClassDeclaration object which is also part of the FileTypeInformation object.
  * @param module a ModuleClassDeclaration object which is a child of the fileTypeInformation object.

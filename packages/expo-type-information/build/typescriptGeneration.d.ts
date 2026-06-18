@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { ClassDeclaration, ConstructorDeclaration, EnumType, FileTypeInformation, FunctionDeclaration, ModuleClassDeclaration, RecordType, Type, ViewDeclaration } from './typeInformation';
+import { ClassDeclaration, ConstructorDeclaration, EnumType, FileTypeInformation, FunctionDeclaration, ModuleClassDeclaration, RecordType, Type, ViewDeclaration } from './typeInformation.types';
 /**
  * A helper type which contains the generated file content and name.
  */
@@ -32,7 +32,7 @@ export type buildFunctionOptions = {
     method?: boolean;
     exported?: boolean;
     declaration?: boolean;
-    returnStatement?: null | ts.ReturnStatement[];
+    returnStatement?: null | ts.Statement[];
     overrideArgumentDeclarations?: ts.ParameterDeclaration[];
     omitReturnType?: boolean;
 };
@@ -42,7 +42,7 @@ type BuildClassOptions = {
     classDeclaration: ClassDeclaration;
     exported?: boolean;
     declaration?: boolean;
-    getFunctionReturnBlock?: (functionDeclaration: FunctionDeclaration) => ts.ReturnStatement[];
+    getFunctionReturnBlock?: (functionDeclaration: FunctionDeclaration) => ts.Statement[];
 };
 export declare function buildClass({ classDeclaration, exported, declaration, getFunctionReturnBlock, }: BuildClassOptions): ts.ClassDeclaration;
 export declare function buildUnknownTypeAlias(identifier: string, exported: boolean, inferredTypeParametersCount: Map<string, number>): ts.Statement;

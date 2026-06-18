@@ -1,5 +1,5 @@
 import commander from 'commander';
-import { FileTypeInformation, TypeInferenceOption } from '../typeInformation';
+import { FileTypeInformation, TypeInferenceOption } from '../typeInformation.types';
 export type TypeInformationCommandCommonAllArguments = {
     inputPaths?: string[];
     modulePath?: string;
